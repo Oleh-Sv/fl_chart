@@ -458,6 +458,84 @@ class LineChartPainter extends AxisChartPainter<LineChartData> {
     }
   }
 
+ List<List<Offset>> calculateControlPoints(List<Offset> dataPoints) {
+    var count = dataPoints.length - 1;
+    var firstControlPoints = List<Offset>.filled(count, Offset.zero);
+    var secondControlPoints = <Offset>[];
+
+    List<double> rhsArrayX = List<double>.filled(count, 0);
+    List<double> rhsArrayY = List<double>.filled(count, 0);
+    List<double> a = List<double>.filled(count, 0);
+    List<double> b = List<double>.filled(count, 0);
+    List<double> c = List<double>.filled(count, 0);
+
+    for (var i = 0; i < count; i++) {
+      var P0 = dataPoints[i];
+      var P3 = dataPoints[i + 1];
+
+      if (i == 0) {
+        a[i] = 0;
+        b[i] = 2;
+        c[i] = 1;
+
+        rhsArrayX[i] = P0.dx + 2 * P3.dx;
+        rhsArrayY[i] = P0.dy + 2 * P3.dy;
+      } else if (i == count - 1) {
+        a[i] = 2;
+        b[i] = 7;
+        c[i] = 0;
+
+        rhsArrayX[i] = 8 * P0.dx + P3.dx;
+        rhsArrayY[i] = 8 * P0.dy + P3.dy;
+      } else {
+        a[i] = 1;
+        b[i] = 4;
+        c[i] = 1;
+
+        rhsArrayX[i] = 4 * P0.dx + 2 * P3.dx;
+        rhsArrayY[i] = 4 * P0.dy + 2 * P3.dy;
+      }
+    }
+
+    for (var i = 1; i < count; i++) {
+      var m = a[i] / b[i - 1];
+      b[i] = b[i] - m * c[i - 1];
+      rhsArrayX[i] = rhsArrayX[i] - m * rhsArrayX[i - 1];
+      rhsArrayY[i] = rhsArrayY[i] - m * rhsArrayY[i - 1];
+    }
+
+    var lastControlPointX = rhsArrayX[count - 1] / b[count - 1];
+    var lastControlPointY = rhsArrayY[count - 1] / b[count - 1];
+    firstControlPoints[count - 1] =
+        Offset(lastControlPointX, lastControlPointY);
+
+    for (var i = count - 2; i >= 0; i--) {
+      var controlPointX =
+          (rhsArrayX[i] - c[i] * firstControlPoints[i + 1].dx) / b[i];
+      var controlPointY =
+          (rhsArrayY[i] - c[i] * firstControlPoints[i + 1].dy) / b[i];
+      firstControlPoints[i] = Offset(controlPointX, controlPointY);
+    }
+
+    for (var i = 0; i < count; i++) {
+      double controlPointX, controlPointY;
+      if (i == count - 1) {
+        var p3 = dataPoints[i + 1];
+        var p1 = firstControlPoints[i];
+        controlPointX = (p3.dx + p1.dx) / 2;
+        controlPointY = (p3.dy + p1.dy) / 2;
+      } else {
+        var p3 = dataPoints[i + 1];
+        var nextP1 = firstControlPoints[i + 1];
+        controlPointX = 2 * p3.dx - nextP1.dx;
+        controlPointY = 2 * p3.dy - nextP1.dy;
+      }
+      secondControlPoints.add(Offset(controlPointX, controlPointY));
+    }
+
+    return [firstControlPoints, secondControlPoints];
+  }
+
   /// firstly we generate the bar line that we should draw,
   /// then we reuse it to fill below bar space.
   /// there is two type of barPath that generate here,
@@ -476,33 +554,33 @@ class LineChartPainter extends AxisChartPainter<LineChartData> {
   }) {
     final path = appendToPath ?? Path();
     final size = barSpots.length;
+    var points = barSpots
+        .map(
+          (e) => Offset(
+            getPixelX(e.x, viewSize, holder),
+            getPixelY(e.y, viewSize, holder),
+          ),
+        )
+        .toList();
 
-    final x = getPixelX(barSpots[0].x, viewSize, holder);
-    final y = getPixelY(barSpots[0].y, viewSize, holder);
+    final controlPoints = calculateControlPoints(points);
+    final firstControlePoints = controlPoints.first;
+    final secondControlePoints = controlPoints.last;
+
     if (appendToPath == null) {
-      path.moveTo(x, y);
+      path.moveTo(points.first.dx, points.first.dy);
     } else {
-      path.lineTo(x, y);
+      path.lineTo(points.first.dx, points.first.dy);
     }
 
     for (var i = 1; i < size; i++) {
-      final current = Offset(
-        getPixelX(barSpots[i].x, viewSize, holder),
-        getPixelY(barSpots[i].y, viewSize, holder),
-      );
-
-      final previous = Offset(
-        getPixelX(barSpots[i - 1].x, viewSize, holder),
-        getPixelY(barSpots[i - 1].y, viewSize, holder),
-      );
-
       path.cubicTo(
-        (current.dx + previous.dx) / 2,
-        previous.dy,
-        (current.dx + previous.dx) / 2,
-        current.dy,
-        current.dx,
-        current.dy,
+        firstControlePoints[i - 1].dx,
+        firstControlePoints[i - 1].dy,
+        secondControlePoints[i - 1].dx,
+        secondControlePoints[i - 1].dy,
+        points[i].dx,
+        points[i].dy,
       );
     }
 
