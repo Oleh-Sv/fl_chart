@@ -574,10 +574,7 @@ class LineChartPainter extends AxisChartPainter<LineChartData> {
     final secondControlePoints = controlPoints.last;
 
     if (appendToPath == null) {
-      path.moveTo(x, y);
-      if (size == 1) {
-        path.lineTo(x, y);
-      }
+      path.moveTo(points.first.dx, points.first.dy);
     } else {
       path.lineTo(points.first.dx, points.first.dy);
     }
