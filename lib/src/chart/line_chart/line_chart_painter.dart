@@ -411,16 +411,22 @@ class LineChartPainter extends AxisChartPainter<LineChartData> {
         }
       }
 
+      final indicatorLine = indicatorData.indicatorBelowLine;
       _touchLinePaint
-        ..color = indicatorData.indicatorBelowLine.color
-        ..strokeWidth = indicatorData.indicatorBelowLine.strokeWidth
+        ..setColorOrGradientForLine(
+          indicatorLine.color,
+          indicatorLine.gradient,
+          from: lineStart,
+          to: lineEnd,
+        )
+        ..strokeWidth = indicatorLine.strokeWidth
         ..transparentIfWidthIsZero();
 
       canvasWrapper.drawDashedLine(
         lineStart,
         lineEnd,
         _touchLinePaint,
-        indicatorData.indicatorBelowLine.dashArray,
+        indicatorLine.dashArray,
       );
 
       /// Draw the indicator dot
@@ -797,17 +803,22 @@ class LineChartPainter extends AxisChartPainter<LineChartData> {
             );
           }
 
+          final lineStyle = barData.belowBarData.spotsLine.flLineStyle;
           _barAreaLinesPaint
-            ..color = barData.belowBarData.spotsLine.flLineStyle.color
-            ..strokeWidth =
-                barData.belowBarData.spotsLine.flLineStyle.strokeWidth
+            ..setColorOrGradientForLine(
+              lineStyle.color,
+              lineStyle.gradient,
+              from: from,
+              to: to,
+            )
+            ..strokeWidth = lineStyle.strokeWidth
             ..transparentIfWidthIsZero();
 
           canvasWrapper.drawDashedLine(
             from,
             to,
             _barAreaLinesPaint,
-            barData.belowBarData.spotsLine.flLineStyle.dashArray,
+            lineStyle.dashArray,
           );
         }
       }
@@ -886,17 +897,22 @@ class LineChartPainter extends AxisChartPainter<LineChartData> {
             );
           }
 
+          final lineStyle = barData.aboveBarData.spotsLine.flLineStyle;
           _barAreaLinesPaint
-            ..color = barData.aboveBarData.spotsLine.flLineStyle.color
-            ..strokeWidth =
-                barData.aboveBarData.spotsLine.flLineStyle.strokeWidth
+            ..setColorOrGradientForLine(
+              lineStyle.color,
+              lineStyle.gradient,
+              from: from,
+              to: to,
+            )
+            ..strokeWidth = lineStyle.strokeWidth
             ..transparentIfWidthIsZero();
 
           canvasWrapper.drawDashedLine(
             from,
             to,
             _barAreaLinesPaint,
-            barData.aboveBarData.spotsLine.flLineStyle.dashArray,
+            lineStyle.dashArray,
           );
         }
       }
