@@ -574,7 +574,10 @@ class LineChartPainter extends AxisChartPainter<LineChartData> {
     final secondControlePoints = controlPoints.last;
 
     if (appendToPath == null) {
-      path.moveTo(points.first.dx, points.first.dy);
+      path.moveTo(x, y);
+      if (size == 1) {
+        path.lineTo(x, y);
+      }
     } else {
       path.lineTo(points.first.dx, points.first.dy);
     }
@@ -1344,6 +1347,7 @@ class LineIndexDrawingInfo {
     this.spotIndex,
     this.indicatorData,
   );
+
   final LineChartBarData line;
   final int lineIndex;
   final FlSpot spot;
